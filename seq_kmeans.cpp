@@ -4,41 +4,6 @@
 #include <limits>
 #include <iostream>
 
-// // Helper function to calculate Euclidean distance between two points
-// double calculateDistance(const std::vector<double>& point1, const std::vector<double>& point2) {
-//     double sum = 0.0;
-//     for (size_t i = 0; i < point1.size(); ++i) {
-//         double diff = point1[i] - point2[i];
-//         sum += diff * diff;
-//     }
-//     return std::sqrt(sum);
-// }
-
-// // Function to assign points to the nearest centroid
-// std::vector<int> assignPointsToClusters(const std::vector<std::vector<double>>& data_points,
-//                                         const std::vector<std::vector<double>>& centroids) {
-//     std::vector<int> cluster_assignments(data_points.size());
-
-//     for (size_t i = 0; i < data_points.size(); ++i) {
-//         double min_distance = std::numeric_limits<double>::max();
-//         int closest_cluster = -1;
-
-//         // Find the closest centroid to the current point
-//         for (size_t j = 0; j < centroids.size(); ++j) {
-//             double distance = calculateDistance(data_points[i], centroids[j]);
-//             if (distance < min_distance) {
-//                 min_distance = distance;
-//                 closest_cluster = j;
-//             }
-//         }
-
-//         // Assign the point to the closest centroid
-//         cluster_assignments[i] = closest_cluster;
-//     }
-
-//     return cluster_assignments;
-// }
-
 // Function to update centroids based on the average of the assigned points
 void updateCentroids(const std::vector<std::vector<double>>& data_points,
                      const std::vector<int>& cluster_assignments,

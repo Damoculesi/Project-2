@@ -74,6 +74,15 @@ void initializeCentroids(const std::vector<std::vector<double>>& data_points, in
             chosen_indices.insert(index);
         }
     }
+    // Print the initialized centroids
+    // std::cout << "Initialized Centroids:" << std::endl;
+    // for (int i = 0; i < centroids.size(); ++i) {
+    //     std::cout << "Centroid " << i << ": ";
+    //     for (int d = 0; d < centroids[i].size(); ++d) {
+    //         std::cout << centroids[i][d] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 }
 
 

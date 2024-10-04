@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Initialize centroids randomly
+    //TODO: does this initialization need parallelism?
     std::vector<std::vector<double>> centroids;
     initializeCentroids(data_points, num_clusters, seed, centroids);
 
