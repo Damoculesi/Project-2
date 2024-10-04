@@ -40,13 +40,11 @@ __global__ void updateCentroids(const double* data_points, const int* cluster_as
         atomicAdd(&new_centroids[cluster_id * dims + d], data_points[point_idx * dims + d]);
     }
 
-    if (threadIdx.x == 0) {
-        atomicAdd(&points_per_cluster[cluster_id], 1);
-    }
+    atomicAdd(&points_per_cluster[cluster_id], 1);
 }
 
 
-int runKMeansCUDA(const std::vector<std::vector<double>>& data_points,
+std::pair<int, double> runKMeansCUDA(const std::vector<std::vector<double>>& data_points,
                   std::vector<std::vector<double>>& centroids,
                   int max_iters, double threshold) {
 
@@ -100,51 +98,52 @@ int runKMeansCUDA(const std::vector<std::vector<double>>& data_points,
 
     int block_size = 256;
     int grid_size = (num_points + block_size - 1) / block_size;
-
-    // Main loop for K-Means
+    
     int iterations = 0;
+
+    // K-Means loop
     while (iterations < max_iters) {
         // Step 1: Assign points to nearest centroid
-        auto kernel_start = std::chrono::high_resolution_clock::now();
+        //auto kernel_start = std::chrono::high_resolution_clock::now();
         assignPointsToCentroids<<<grid_size, block_size>>>(d_data_points, d_centroids, d_cluster_assignments, num_points, num_clusters, dims);
         cudaDeviceSynchronize();
-        auto kernel_end = std::chrono::high_resolution_clock::now();
-        std::cout << "Kernel execution time for assign points (iteration " << iterations << "): "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(kernel_end - kernel_start).count() << " ms" << std::endl;
+        //auto kernel_end = std::chrono::high_resolution_clock::now();
+        //std::cout << "Kernel execution time for assign points (iteration " << iterations << "): "
+        //          << std::chrono::duration_cast<std::chrono::milliseconds>(kernel_end - kernel_start).count() << " ms" << std::endl;
 
         // Step 2: Update centroids
         // Allocate memory for new centroids and points count
-        start_cpu = std::chrono::high_resolution_clock::now();
+        //start_cpu = std::chrono::high_resolution_clock::now();
         double* d_new_centroids;
         int* d_points_per_cluster;
         cudaMalloc(&d_new_centroids, num_clusters * dims * sizeof(double));
         cudaMalloc(&d_points_per_cluster, num_clusters * sizeof(int));
         cudaMemset(d_new_centroids, 0, num_clusters * dims * sizeof(double));
         cudaMemset(d_points_per_cluster, 0, num_clusters * sizeof(int));
-        end_cpu = std::chrono::high_resolution_clock::now();
-        std::cout << "GPU memory allocation and initialization for new centroids (iteration " << iterations << "): "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
+        //end_cpu = std::chrono::high_resolution_clock::now();
+        //std::cout << "GPU memory allocation and initialization for new centroids (iteration " << iterations << "): "
+        //          << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
 
         // Kernel to update centroids
-        kernel_start = std::chrono::high_resolution_clock::now();
+        //kernel_start = std::chrono::high_resolution_clock::now();
         updateCentroids<<<grid_size, block_size>>>(d_data_points, d_cluster_assignments, d_new_centroids, d_points_per_cluster, num_points, num_clusters, dims);
         cudaDeviceSynchronize();
-        kernel_end = std::chrono::high_resolution_clock::now();
-        std::cout << "Kernel execution time for update centroids (iteration " << iterations << "): "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(kernel_end - kernel_start).count() << " ms" << std::endl;
+        //kernel_end = std::chrono::high_resolution_clock::now();
+        //std::cout << "Kernel execution time for update centroids (iteration " << iterations << "): "
+        //          << std::chrono::duration_cast<std::chrono::milliseconds>(kernel_end - kernel_start).count() << " ms" << std::endl;
 
         // Copy new centroids back to host
-        start_cpu = std::chrono::high_resolution_clock::now();
+        //start_cpu = std::chrono::high_resolution_clock::now();
         std::vector<double> new_flat_centroids(num_clusters * dims);
         std::vector<int> points_per_cluster(num_clusters);
         cudaMemcpy(new_flat_centroids.data(), d_new_centroids, num_clusters * dims * sizeof(double), cudaMemcpyDeviceToHost);
         cudaMemcpy(points_per_cluster.data(), d_points_per_cluster, num_clusters * sizeof(int), cudaMemcpyDeviceToHost);
-        end_cpu = std::chrono::high_resolution_clock::now();
-        std::cout << "Data transfer from device to host time (iteration " << iterations << "): "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
+        //end_cpu = std::chrono::high_resolution_clock::now();
+        //std::cout << "Data transfer from device to host time (iteration " << iterations << "): "
+        //         << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
 
         // Calculate new centroids by averaging
-        start_cpu = std::chrono::high_resolution_clock::now();
+        //start_cpu = std::chrono::high_resolution_clock::now();
         bool converged = true;
         for (int c = 0; c < num_clusters; ++c) {
             for (int d = 0; d < dims; ++d) {
@@ -158,15 +157,15 @@ int runKMeansCUDA(const std::vector<std::vector<double>>& data_points,
                 flat_centroids[c * dims + d] = new_flat_centroids[c * dims + d];
             }
         }
-        end_cpu = std::chrono::high_resolution_clock::now();
-        std::cout << "Host-side centroid calculation time (iteration " << iterations << "): "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
+        //end_cpu = std::chrono::high_resolution_clock::now();
+        //std::cout << "Host-side centroid calculation time (iteration " << iterations << "): "
+        //          << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
 
         // Check convergence
         if (converged) {
             break;
         }
-
+        cudaMemcpy(d_centroids, flat_centroids.data(), num_clusters * dims * sizeof(double), cudaMemcpyHostToDevice);
         iterations++;
 
         // Free temporary memory for centroids
@@ -176,26 +175,29 @@ int runKMeansCUDA(const std::vector<std::vector<double>>& data_points,
 
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "Total GPU kernel execution time: " << milliseconds << " ms" << std::endl;
+    float elapsed_time = 0;
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+
+    // Convert the elapsed time from float to double
+    double total_time = static_cast<double>(elapsed_time);
+    //std::cout << "Total GPU kernel execution time: " << milliseconds << " ms" << std::endl;
 
     // Copy final centroids back to the host vector
-    start_cpu = std::chrono::high_resolution_clock::now();
-    cudaMemcpy(flat_centroids.data(), d_centroids, num_clusters * dims * sizeof(double), cudaMemcpyHostToDevice);
+    //start_cpu = std::chrono::high_resolution_clock::now();
+    cudaMemcpy(flat_centroids.data(), d_centroids, num_clusters * dims * sizeof(double), cudaMemcpyDeviceToHost);
     for (int c = 0; c < num_clusters; ++c) {
         for (int d = 0; d < dims; ++d) {
             centroids[c][d] = flat_centroids[c * dims + d];
         }
     }
-    end_cpu = std::chrono::high_resolution_clock::now();
-    std::cout << "Final centroid copy back to host time: "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
+    //end_cpu = std::chrono::high_resolution_clock::now();
+    //std::cout << "Final centroid copy back to host time: "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(end_cpu - start_cpu).count() << " ms" << std::endl;
 
     // Free GPU memory
     cudaFree(d_data_points);
     cudaFree(d_centroids);
     cudaFree(d_cluster_assignments);
 
-    return iterations;
+    return std::make_pair(iterations, total_time);
 }
