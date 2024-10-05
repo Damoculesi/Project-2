@@ -80,25 +80,33 @@ int main(int argc, char *argv[]) {
     initializeCentroids(data_points, num_clusters, seed, centroids);
 
     // Run K-Means (choose implementation based on the command line flag)
-    int iterations = 0;
-    auto start = std::chrono::high_resolution_clock::now();
+    // int iterations = 0;
+    // auto start = std::chrono::high_resolution_clock::now();
 
+
+    // Run K-Means (choose implementation based on the command line flag)
+    std::pair<int, double> results;
     if (use_cpu) {
-        iterations = runKMeansSequential(data_points, centroids, max_iters, threshold);
-    // } else if (use_cuda) {
-    //     iterations = runKMeansCUDA(data_points, centroids, max_iters, threshold);
+        results = runKMeansSequential(data_points, centroids, max_iters, threshold);
+    } else if (use_cuda) {
+        results = runKMeansCUDA(data_points, centroids, max_iters, threshold);
     // } else if (use_thrust) {
     //     iterations = runKMeansThrust(data_points, centroids, max_iters, threshold);
-    // } else if (use_shmem) {
-    //     iterations = runKMeansSharedMemory(data_points, centroids, max_iters, threshold);
+    } else if (use_shmem) {
+        results = runKMeansSharedMemoryCUDA(data_points, centroids, max_iters, threshold);
     } else {
         std::cerr << "Error: No implementation type specified. Use --use_cpu, --use_cuda, --use_thrust, or --use_shmem." << std::endl;
         return 1;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    double time_per_iter = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / (double)iterations;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // double time_per_iter = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / (double)iterations;
 
+    // Output number of iterations and time per iterations
+    int iterations = results.first;
+    double total_time = results.second;
+    double time_per_iter = total_time / (double)iterations;
+    
     // Output results
     // std::cout << iterations << "," << time_per_iter << std::endl;
     printf("%d,%lf\n", iterations, time_per_iter);

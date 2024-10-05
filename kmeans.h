@@ -17,15 +17,15 @@ std::vector<int> assignPointsToClusters(const std::vector<std::vector<double>>& 
 void initializeCentroids(const std::vector<std::vector<double>>& data_points, int num_clusters, int seed, std::vector<std::vector<double>>& centroids);
 
 // Function to run the sequential version of K-Means
-int runKMeansSequential(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
+std::pair<int, double> runKMeansSequential(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
 
 // Function to run the CUDA version of K-Means
-int runKMeansCUDA(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
+std::pair<int, double> runKMeansCUDA(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
 
 // Function to run the Thrust version of K-Means
-int runKMeansThrust(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
+std::pair<int, double> runKMeansThrust(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
 
 // Function to run the Thrust version of K-Means
-int runKMeansSharedMemory(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
+std::pair<int, double> runKMeansSharedMemoryCUDA(const std::vector<std::vector<double>>& data_points, std::vector<std::vector<double>>& centroids, int max_iters, double threshold);
 
 #endif // KMEANS_H
