@@ -120,7 +120,10 @@ std::pair<int, double> runKMeansThrust(const std::vector<std::vector<double>>& d
     int iterations = 0;
 
     // Start timing
-    auto start = std::chrono::high_resolution_clock::now();
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
 
     while (iterations < max_iters) {
         // Step 1: Assign points to the nearest centroid
@@ -194,8 +197,12 @@ std::pair<int, double> runKMeansThrust(const std::vector<std::vector<double>>& d
         iterations++;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    double total_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    // End timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float elapsed_time = 0;
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+    double total_time = static_cast<double>(elapsed_time);
 
     // Copy final centroids back to host
     thrust::copy(d_centroids.begin(), d_centroids.end(), h_centroids_flat.begin());
