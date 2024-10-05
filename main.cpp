@@ -90,8 +90,8 @@ int main(int argc, char *argv[]) {
         results = runKMeansSequential(data_points, centroids, max_iters, threshold);
     } else if (use_cuda) {
         results = runKMeansCUDA(data_points, centroids, max_iters, threshold);
-    // } else if (use_thrust) {
-    //     iterations = runKMeansThrust(data_points, centroids, max_iters, threshold);
+    } else if (use_thrust) {
+        results = runKMeansThrust(data_points, centroids, max_iters, threshold);
     } else if (use_shmem) {
         results = runKMeansSharedMemoryCUDA(data_points, centroids, max_iters, threshold);
     } else {

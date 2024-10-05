@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <chrono>
 
 // Function to update centroids based on the average of the assigned points
 void updateCentroids(const std::vector<std::vector<double>>& data_points,
@@ -47,7 +48,7 @@ bool checkConvergence(const std::vector<std::vector<double>>& old_centroids,
 }
 
 // Main function to run K-Means clustering sequentially
-int runKMeansSequential(const std::vector<std::vector<double>>& data_points,
+std::pair<int, double> runKMeansSequential(const std::vector<std::vector<double>>& data_points,
                         std::vector<std::vector<double>>& centroids,
                         int max_iters, double threshold) {
     int num_clusters = centroids.size();
@@ -57,6 +58,10 @@ int runKMeansSequential(const std::vector<std::vector<double>>& data_points,
     std::vector<int> cluster_assignments(num_points);
     int iterations = 0;
 
+    // Start timing the K-Means main loop
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // K-Means main loop
     while (iterations < max_iters) {
         // Step 1: Assign points to the nearest centroid
         cluster_assignments = assignPointsToClusters(data_points, centroids);
@@ -75,5 +80,8 @@ int runKMeansSequential(const std::vector<std::vector<double>>& data_points,
         iterations++;
     }
 
-    return iterations;
+    auto end = std::chrono::high_resolution_clock::now();
+    double total_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    return std::make_pair(iterations, total_time);
 }
